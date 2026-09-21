@@ -1,22 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Download, FolderPlus, ShieldCheck, AlertTriangle, FileCode, CheckCircle } from 'lucide-react';
+import { Play, Download, FolderPlus, ShieldCheck, Upload, X, CheckCircle, FileText } from 'lucide-react';
 import { HealthScoreReport, Finding } from '@/lib/types';
 
 export default function Dashboard() {
+  const [projects, setProjects] = useState<Array<{ id: number; name: string }>>([
+    { id: 1, name: 'Demo Spring Boot Store (samples/demo-project)' }
+  ]);
+  const [selectedProjectId, setSelectedProjectId] = useState<number>(1);
   const [report, setReport] = useState<HealthScoreReport | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
+  
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [projectName, setProjectName] = useState<string>('');
+  const [javaCodeInput, setJavaCodeInput] = useState<string>('');
+  const [readmeInput, setReadmeInput] = useState<string>('');
 
   useEffect(() => {
-    handleRunAnalysis();
+    handleRunAnalysis(1);
   }, []);
 
-  const handleRunAnalysis = async () => {
+  const handleRunAnalysis = async (projId = selectedProjectId, customData?: any) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/analyze', { method: 'POST' });
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customData || { projectId: projId })
+      });
       const data = await res.json();
       setReport(data);
     } catch (err) {
@@ -24,6 +38,30 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUploadNewProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectName.trim()) return;
+
+    const newId = Date.now();
+    const newProj = { id: newId, name: projectName };
+    setProjects(prev => [...prev, newProj]);
+    setSelectedProjectId(newId);
+    setIsModalOpen(false);
+
+    // Run analysis with custom inputs
+    handleRunAnalysis(newId, {
+      projectId: newId,
+      projectName,
+      javaCode: javaCodeInput,
+      readme: readmeInput
+    });
+
+    // Reset inputs
+    setProjectName('');
+    setJavaCodeInput('');
+    setReadmeInput('');
   };
 
   const handleExportMarkdown = () => {
@@ -43,7 +81,7 @@ export default function Dashboard() {
           <div className="flex items-center space-x-3">
             <ShieldCheck className="h-7 w-7 text-indigo-400" />
             <span className="text-xl font-bold tracking-tight">DocDrift</span>
-            <span className="rounded bg-indigo-500/20 px-2 py-0.5 text-xs text-indigo-300 font-medium">Vercel Production Ready</span>
+            <span className="rounded bg-indigo-500/20 px-2 py-0.5 text-xs text-indigo-300 font-medium">Vercel Live</span>
           </div>
           <div className="text-xs text-slate-400">Documentation Decay Detector v1.0.0</div>
         </div>
@@ -54,21 +92,39 @@ export default function Dashboard() {
 
         {/* Top Action Bar */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center space-x-4">
-            <span className="font-semibold text-slate-700">Target Project:</span>
-            <select className="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800">
-              <option>Demo Spring Boot Store (samples/demo-project)</option>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-semibold text-slate-700">Project:</span>
+            <select
+              value={selectedProjectId}
+              onChange={(e) => {
+                const id = Number(e.target.value);
+                setSelectedProjectId(id);
+                handleRunAnalysis(id);
+              }}
+              className="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800"
+            >
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
             </select>
             <button
-              onClick={handleRunAnalysis}
+              onClick={() => handleRunAnalysis()}
               disabled={loading}
               className="inline-flex items-center space-x-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
             >
               <Play className="h-4 w-4" />
-              <span>{loading ? 'Analyzing...' : 'Run Consistency Scan'}</span>
+              <span>{loading ? 'Analyzing...' : 'Run Scan'}</span>
             </button>
           </div>
+
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center space-x-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              <FolderPlus className="h-4 w-4" />
+              <span>Upload / Register New Project</span>
+            </button>
             <button
               onClick={handleExportMarkdown}
               className="inline-flex items-center space-x-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
@@ -192,6 +248,72 @@ export default function Dashboard() {
         </div>
 
       </main>
+
+      {/* Upload Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b pb-3 mb-4">
+              <h3 className="text-lg font-bold text-slate-900">Upload / Register New Project</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadNewProject} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Project Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. My Spring Service"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Java Controller Code (Paste snippet)</label>
+                <textarea
+                  rows={4}
+                  placeholder={`@RestController\n@RequestMapping("/api/users")\npublic class UserController {\n    @PostMapping\n    public String createUser(@RequestParam String name) { return "ok"; }\n}`}
+                  value={javaCodeInput}
+                  onChange={(e) => setJavaCodeInput(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Documentation README.md (Paste snippet)</label>
+                <textarea
+                  rows={3}
+                  placeholder={`# User API\n- POST /api/users\nAccepts parameters: name, email, phone`}
+                  value={readmeInput}
+                  onChange={(e) => setReadmeInput(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Scan & Analyze
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
