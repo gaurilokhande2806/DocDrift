@@ -1,0 +1,67 @@
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #212529;
+}
+
+.score-circle {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 6px solid #0d6efd;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.score-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.score-total {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.bg-healthy {
+    background-color: #198754 !important;
+    color: #fff;
+}
+
+.bg-mild {
+    background-color: #0dcaf0 !important;
+    color: #000;
+}
+
+.bg-moderate {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.bg-severe {
+    background-color: #dc3545 !important;
+    color: #fff;
+}
+
+.diff-box {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.85rem;
+}
+
+.diff-add {
+    color: #198754;
+    font-weight: 600;
+}
+
+.diff-del {
+    color: #dc3545;
+    font-weight: 600;
+}

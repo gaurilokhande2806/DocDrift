@@ -1,0 +1,21 @@
+openapi: 3.0.1
+info:
+  title: Demo Store API
+  version: 1.0.0
+paths:
+  /api/users:
+    post:
+      summary: Register User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+  /api/products:
+    get:
+      summary: List Products
