@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: docdrift
+    env: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: docdrift-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: docdrift-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: docdrift-db
+          property: password
+
+databases:
+  - name: docdrift-db
+    databaseName: docdrift
+    user: docdrift_user
+    plan: free
